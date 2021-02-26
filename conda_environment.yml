@@ -1,0 +1,15 @@
+name: duomolog
+channels:
+  - defaults
+  - anaconda
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - hmmer=3.3.1
+  - blast=2.10.1
+  - biopython=1.78
+  - setuptools=52.0.0
+
+
+  
