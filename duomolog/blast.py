@@ -10,7 +10,7 @@ def run_blast(dbFile, queryFile):
 	blastpCMD = NcbiblastpCommandline(query=queryFile, 
 		db=dbFile, evalue=0.001, max_target_seqs=1, outfmt=6)
 	blastpOUT, blastpERR = blastpCMD()
-	blasdpDF = pd.read_csv(StringIO(blastpOUT),sep="\t"
+	blasdpDF = pd.read_csv(StringIO(blastpOUT),sep="\t",
 			names = ["qseqid","sseqid","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore"])
 	
 	return blasdpDF
