@@ -1,4 +1,6 @@
 build
 dist
 duomolog.egg-info
+duomolog_out
 files.txt
+test
