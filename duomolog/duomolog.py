@@ -181,6 +181,9 @@ def main():
 						record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
 						seq_out.write(record.format("fasta"))
 						summary_out.write(header+"\tblast_intersect_hmmer\n")
+				outAlignment = msa.run_mafft(outdir +"/blast_intersect_hmmer.fa")
+				outAlignmentFile = outdir +"/blast_intersect_hmmer.mafft.aln"
+				outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 
 
 		else:
