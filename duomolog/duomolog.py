@@ -172,18 +172,20 @@ def main():
 		
 		if intersect_only:
 			blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
-			with open(outdir +"/duomolog_results.txt", "w") as summary_out:
-				with open(outdir +"/blast_intersect_hmmer.fa","w") as seq_out:
-					for input_header in inputSeq:
-						record = inputSeq[input_header]
-						seq_out.write(record.format("fasta"))
-					for header in blast_hmmer_subsetSeqs["blast_intersect_hmmer"]:
-						record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
-						seq_out.write(record.format("fasta"))
-						summary_out.write(header+"\tblast_intersect_hmmer\n")
-				outAlignment = msa.run_mafft(outdir +"/blast_intersect_hmmer.fa")
-				outAlignmentFile = outdir +"/blast_intersect_hmmer.mafft.aln"
-				outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
+			# print(len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]))
+			if len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]) >0:
+				with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+					with open(outdir +"/blast_intersect_hmmer.fa","w") as seq_out:
+						for input_header in inputSeq:
+							record = inputSeq[input_header]
+							seq_out.write(record.format("fasta"))
+						for header in blast_hmmer_subsetSeqs["blast_intersect_hmmer"]:
+							record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
+							seq_out.write(record.format("fasta"))
+							summary_out.write(header+"\tblast_intersect_hmmer\n")
+					outAlignment = msa.run_mafft(outdir +"/blast_intersect_hmmer.fa")
+					outAlignmentFile = outdir +"/blast_intersect_hmmer.mafft.aln"
+					outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 
 
 		else:
