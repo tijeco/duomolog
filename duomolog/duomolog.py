@@ -23,7 +23,7 @@ class ParseCommands(object):
 				hmm_v_hmm''')
 		parser.add_argument("command", help="Subcommand to run")
 		
-		parser.add_argument('-format',
+		parser.add_argument('--format',
                     choices=["clustal",
 							"emboss",
 							"fasta",
@@ -59,10 +59,13 @@ class ParseCommands(object):
 		parser = argparse.ArgumentParser(
 			description="Runs blast and hmmer")
 		
-		parser.add_argument("-input","-i", type=argparse.FileType('r'),required=True)
-		parser.add_argument("-query","-q",type=argparse.FileType('r'), 
+		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True)
+		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
-		parser.add_argument("-outdir","-o",default="duomolog_out")
+		parser.add_argument("--intersect_only", type=str2bool, nargs='?',
+                        const=True, default=False,
+                        help="Activate nice mode.")
+		parser.add_argument("--outdir","-o",default="duomolog_out")
 		args = parser.parse_args(sys.argv[2:])
 
 		self.args = args
@@ -70,8 +73,8 @@ class ParseCommands(object):
 	def hmm_v_hmm(self):
 		parser = argparse.ArgumentParser(
 			description="Runs hmmer on two separate alignments")
-		parser.add_argument("-aln1","-a1", type=argparse.FileType('r'),required=True)
-		parser.add_argument("-aln2","-a2", type=argparse.FileType('r'),required=True)
+		parser.add_argument("--aln1","-a1", type=argparse.FileType('r'),required=True)
+		parser.add_argument("--aln2","-a2", type=argparse.FileType('r'),required=True)
 		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
 		args = parser.parse_args(sys.argv[2:])
@@ -80,6 +83,15 @@ class ParseCommands(object):
 		return(self.args)
 		
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def notRedundant(sequences):
 	seqs = {}
@@ -125,6 +137,8 @@ def main():
 
 	query_file = duomolog_args.query.name
 	outdir = duomolog_args.outdir
+	intersect_only = duomolog_args.intersect_only
+	
 	checkDir(outdir)
 	querySeq = SeqIO.index(query_file, "fasta")
 	# print(querySeq.items())
@@ -151,25 +165,41 @@ def main():
 		blast_headers = set(blast_results["qseqid"].astype(str))
 		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
 		blast_hmmer_subset = resultSubset.Duo("blast",blast_headers,"hmmer",hmmer_headers)
-		blast_hmmer_subset.dropEmpty()
-		blast_hmmer_subset.dropRedundant()
+		
 
 		# print(querySeq)
 		# print(querySeq["119355"])
-		blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
-		with open(outdir +"/duomolog_results.txt", "w") as summary_out:
-			for subset in blast_hmmer_subsetSeqs:
-				with open(outdir +"/"+  subset + ".fa","w") as seq_out:
+		
+		if intersect_only:
+			blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+			with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+				with open(outdir +"/blast_intersect_hmmer.fa","w") as seq_out:
 					for input_header in inputSeq:
 						record = inputSeq[input_header]
 						seq_out.write(record.format("fasta"))
-					for header in blast_hmmer_subsetSeqs[subset]:
-						record = blast_hmmer_subsetSeqs[subset][header]
+					for header in blast_hmmer_subsetSeqs["blast_intersect_hmmer"]:
+						record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
 						seq_out.write(record.format("fasta"))
-						summary_out.write(header+"\t" + subset + "\n")
-				outAlignment = msa.run_mafft(outdir +"/"+  subset + ".fa")
-				outAlignmentFile = outdir +"/"+  subset + ".mafft.aln"
-				outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
+						summary_out.write(header+"\tblast_intersect_hmmer\n")
+
+
+		else:
+			blast_hmmer_subset.dropEmpty()
+			blast_hmmer_subset.dropRedundant()
+			blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+			with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+				for subset in blast_hmmer_subsetSeqs:
+					with open(outdir +"/"+  subset + ".fa","w") as seq_out:
+						for input_header in inputSeq:
+							record = inputSeq[input_header]
+							seq_out.write(record.format("fasta"))
+						for header in blast_hmmer_subsetSeqs[subset]:
+							record = blast_hmmer_subsetSeqs[subset][header]
+							seq_out.write(record.format("fasta"))
+							summary_out.write(header+"\t" + subset + "\n")
+					outAlignment = msa.run_mafft(outdir +"/"+  subset + ".fa")
+					outAlignmentFile = outdir +"/"+  subset + ".mafft.aln"
+					outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 			
 		
 
