@@ -1,10 +1,13 @@
 import sys
-import argparse
+import argparse, os
 from Bio import AlignIO
 from Bio import SeqIO
 
-
 from duomolog import blast
+from duomolog import msa
+from duomolog import hmmer
+from duomolog import resultSubset
+
 
 
 
@@ -36,7 +39,9 @@ class ParseCommands(object):
 					default="fasta",
                     help='Special testing value')
 		
-        # parse_args defaults to [1:] for args, but you need to
+		parser.add_argument("-outdir","-o",default="duomolog_out")
+        
+		# parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
 		args = parser.parse_args(sys.argv[1:2])
 		self.base_args = parser.parse_args(sys.argv[1:2])
@@ -53,7 +58,7 @@ class ParseCommands(object):
 		parser = argparse.ArgumentParser(
 			description="Runs blast and hmmer")
 		
-		parser.add_argument("-aln","-a", type=argparse.FileType('r'),required=True)
+		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True)
 		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
 		args = parser.parse_args(sys.argv[2:])
@@ -73,45 +78,39 @@ class ParseCommands(object):
 		return(self.args)
 		
 
-def notRedundant(sequences,aligned=True):
+
+def notRedundant(sequences):
 	seqs = {}
-	for record in sequences:
-		if record.seq not in seqs:
-			if aligned:
-				seq = str(record.seq).replace("-","")
-			seqs[seq] = record.id
+	for id, record in sequences.items():
+		seq = record.seq
+		if seq not in seqs:
+			seqs[seq] = id
 		else:
 			seqs = {}
 			break
 	return seqs
 
-def pairRedundant(known,unknown, aligned=True):
-	nr_known = notRedundant(known)
-	nr_unknown = notRedundant(unknown)
+def pairRedundant(input,query):
+	nr_input = notRedundant(input)
+	nr_query = notRedundant(query)
 	
-	if nr_known == False:
+	if nr_input == False:
 		sys.exit("input alignment contains redundant sequences, please fix and try again")
-	if nr_unknown == False:
+	if nr_query == False:
 		sys.exit("input query contains redundant sequences, please fix and try again")
 	
-	known_seqs = set(nr_known.keys())
-	unknown_seqs = set(nr_unknown.keys())
-	shared_seqs = known_seqs & unknown_seqs
-	shared_seqs_unknown_ids = [nr_unknown[i] for i in shared_seqs]
-	return shared_seqs_unknown_ids
-	
-	
-	
-	
-
-	# print("checking if ", known, "has ")
-	# if aligned:
-		
-
-
-
-
-
+	input_seqs = set(nr_input.keys())
+	query_seqs = set(nr_query.keys())
+	shared_seqs = input_seqs & query_seqs
+	shared_seqs_query_ids = [nr_query[i] for i in shared_seqs]
+	# print(shared_seqs)
+	# print(len(input_seqs),len(query_seqs),len(shared_seqs))
+	return shared_seqs_query_ids
+def checkDir(dirName):
+	if not os.path.exists(dirName):
+		os.makedirs(dirName)
+	elif len(os.listdir(dirName)) != 0:
+		print("ERROR: provided output directory is not empty")
 
 
 def main():
@@ -120,19 +119,59 @@ def main():
 	duomolog_args = cli.args
 	subcommand = cli.base_args.command 
 	alignment_format = cli.base_args.format
+	outdir = cli.base_args.outdir
+	checkDir(outdir)
 
 	query_file = duomolog_args.query.name
-	query = SeqIO.parse(query_file, "fasta")
+	querySeq = SeqIO.index(query_file, "fasta")
+	# print(querySeq.items())
 
 	if subcommand == "blast_v_hmmer":
-		alignment_file = duomolog_args.aln.name
-		alignment = AlignIO.read(open(alignment_file), alignment_format)
-		sharedIDs = pairRedundant(alignment,query)
+		input_file = duomolog_args.input.name
+		# alignment = AlignIO.read(open(alignment_file), alignment_format)
+		inputSeq = SeqIO.index(input_file, "fasta")
+		sharedIDs = pairRedundant(inputSeq,querySeq)
 		if sharedIDs:
 			print("Error: the following sequences were found in the query that are already in the input alignment, please remove and try again")
 			for h in sharedIDs:
 				print(h)
 			sys.exit()
+
+		blast_results = blast.run_blast(input_file,query_file)
+		
+		# print(blast_results)
+		alignment = msa.run_mafft(input_file)
+		alignment_file = input_file + ".mafft.aln"
+		alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
+		hmmer_results = hmmer.run_hmmer(alignment_file, query_file)
+
+		blast_headers = set(blast_results["qseqid"].astype(str))
+		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
+		blast_hmmer_subset = resultSubset.Duo("blast",blast_headers,"hmmer",hmmer_headers)
+		blast_hmmer_subset.dropEmpty()
+		blast_hmmer_subset.dropRedundant()
+
+		# print(querySeq)
+		# print(querySeq["119355"])
+		blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+
+		for subset in blast_hmmer_subsetSeqs:
+			with open(outdir +"/"+  subset + ".fa","w") as out:
+
+				for header in blast_hmmer_subsetSeqs[subset]:
+					record = blast_hmmer_subsetSeqs[subset][header]
+					out.write(record.format("fasta"))
+			
+		
+
+		
+
+
+		
+
+
+		
+
 		
 		
 		
