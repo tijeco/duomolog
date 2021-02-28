@@ -110,7 +110,7 @@ def checkDir(dirName):
 	if not os.path.exists(dirName):
 		os.makedirs(dirName)
 	elif len(os.listdir(dirName)) != 0:
-		print("ERROR: provided output directory is not empty")
+		print("WARNING: provided output directory is not empty")
 
 
 def main():
@@ -154,13 +154,14 @@ def main():
 		# print(querySeq)
 		# print(querySeq["119355"])
 		blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+		with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+			for subset in blast_hmmer_subsetSeqs:
+				with open(outdir +"/"+  subset + ".fa","w") as seq_out:
 
-		for subset in blast_hmmer_subsetSeqs:
-			with open(outdir +"/"+  subset + ".fa","w") as out:
-
-				for header in blast_hmmer_subsetSeqs[subset]:
-					record = blast_hmmer_subsetSeqs[subset][header]
-					out.write(record.format("fasta"))
+					for header in blast_hmmer_subsetSeqs[subset]:
+						record = blast_hmmer_subsetSeqs[subset][header]
+						seq_out.write(record.format("fasta"))
+						summary_out.write(header+"\t" + subset + "\n")
 			
 		
 
