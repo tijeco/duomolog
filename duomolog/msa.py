@@ -6,6 +6,7 @@ def run_mafft(inFile):
 	mafft_cline = MafftCommandline(input = inFile)
 	stdout, stderr = mafft_cline()
 	alignment = AlignIO.read(StringIO(stdout), "fasta")
+	
 	# print(align)
 	return alignment
 	
