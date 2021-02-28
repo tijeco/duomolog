@@ -39,7 +39,7 @@ class ParseCommands(object):
 					default="fasta",
                     help='Special testing value')
 		
-		parser.add_argument("-outdir","-o",default="duomolog_out")
+		
         
 		# parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
@@ -61,6 +61,7 @@ class ParseCommands(object):
 		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True)
 		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
+		parser.add_argument("-outdir","-o",default="duomolog_out")
 		args = parser.parse_args(sys.argv[2:])
 
 		self.args = args
