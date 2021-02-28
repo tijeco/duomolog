@@ -22,6 +22,7 @@ class ParseCommands(object):
 				blast_v_hmmer
 				hmm_v_hmm''')
 		parser.add_argument("command", help="Subcommand to run")
+		
 		parser.add_argument('-format',
                     choices=["clustal",
 							"emboss",
@@ -58,8 +59,8 @@ class ParseCommands(object):
 		parser = argparse.ArgumentParser(
 			description="Runs blast and hmmer")
 		
-		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True)
-		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
+		parser.add_argument("-input","-i", type=argparse.FileType('r'),required=True)
+		parser.add_argument("-query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
 		parser.add_argument("-outdir","-o",default="duomolog_out")
 		args = parser.parse_args(sys.argv[2:])
@@ -120,10 +121,11 @@ def main():
 	duomolog_args = cli.args
 	subcommand = cli.base_args.command 
 	alignment_format = cli.base_args.format
-	outdir = cli.base_args.outdir
-	checkDir(outdir)
+	
 
 	query_file = duomolog_args.query.name
+	outdir = duomolog_args.outdir
+	checkDir(outdir)
 	querySeq = SeqIO.index(query_file, "fasta")
 	# print(querySeq.items())
 
