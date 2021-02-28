@@ -6,10 +6,15 @@ channels:
   - bioconda
 
 dependencies:
+  - pandas=1.2.2
   - hmmer=3.3.1
   - blast=2.10.1
+  - mafft=7.475
   - biopython=1.78
   - setuptools=52.0.0
+  - pip=21.0.1
+  - pip:
+    - pyhmmer==0.2.1
 
 
   
