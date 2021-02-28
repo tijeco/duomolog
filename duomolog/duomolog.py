@@ -157,11 +157,16 @@ def main():
 		with open(outdir +"/duomolog_results.txt", "w") as summary_out:
 			for subset in blast_hmmer_subsetSeqs:
 				with open(outdir +"/"+  subset + ".fa","w") as seq_out:
-
+					for input_header in inputSeq:
+						record = inputSeq[input_header]
+						seq_out.write(record.format("fasta"))
 					for header in blast_hmmer_subsetSeqs[subset]:
 						record = blast_hmmer_subsetSeqs[subset][header]
 						seq_out.write(record.format("fasta"))
 						summary_out.write(header+"\t" + subset + "\n")
+				outAlignment = msa.run_mafft(outdir +"/"+  subset + ".fa")
+				outAlignmentFile = outdir +"/"+  subset + ".mafft.aln"
+				outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 			
 		
 
