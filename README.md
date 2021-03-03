@@ -1,6 +1,30 @@
 # duomolog
 A method to identify the best set of homologous sequences from two homology searching approaches.
 
+
+# Usage
+```
+usage: duomolog <command> [<args>] <queryPepFasta>
+                        The most commonly used duomolog commands are:
+                                blast_v_hmmer
+                                hmm_v_hmm
+
+usage: duomolog blast_v_hmmer [<args>] 
+Runs blast and hmmer
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        Verified homologous input protein sequence fasta file
+  --query QUERY, -q QUERY
+                        FASTA formatted file containing database of peptides to be searched
+  --intersect_only [INTERSECT_ONLY]
+                        Only write hits from both approaches
+  --blastout BLASTOUT   Tab delimited output file from BLAST
+  --hmm HMM             HMM output file from hmmbuild
+  --outFile OUTFILE, -o OUTFILE
+                        Name of file to write output to
+```
 # Sub-commands
 `blast_v_hmmer`
 - compares hits of BLAST results vs HMMER
@@ -33,3 +57,5 @@ The `Duo` object in `duo.py` takes in two `set()` objects of strings and returns
 
 
 # Pick the best subset
+
+<!-- To be conservative, for now I am only focusing on the intersection. In the future, I would like to construct a multiple sequence alignment from the query  hits and the verified input, and compare the alignments and pick the subset that has the "best alignment" (less gappy, ) -->
