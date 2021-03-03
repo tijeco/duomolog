@@ -21,7 +21,6 @@ def load_blast(blastout,inHeaders):
 	blastpDF = pd.read_csv(blastout, sep = "\t", names = ["qseqid","sseqid","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore"])
 	blastHeaders = set(blastpDF["sseqid"].astype(str))
 	blastHeaders_union_inHeaders = blastHeaders | set(inHeaders)
-	
 	if blastHeaders_union_inHeaders  != set(inHeaders):
 		sys.exit("the provided blast file contains headers not found in the input file")
 	
