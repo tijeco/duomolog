@@ -199,7 +199,7 @@ def main():
 		if not intersect_only:
 			blast_hmmer_subset.dropEmpty()
 			blast_hmmer_subset.dropRedundant()
-		print("Writing to:",outFile)
+		# print("Writing to:",outFile)
 		resultSubset.writeOut(outFile,blast_hmmer_subset,querySeq,intersect_only)
 		
 
