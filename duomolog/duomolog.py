@@ -6,6 +6,7 @@ from Bio import SeqIO
 from duomolog import blast
 from duomolog import msa
 from duomolog import hmmer
+from duomolog import duo
 from duomolog import resultSubset
 
 
@@ -65,6 +66,8 @@ class ParseCommands(object):
 		parser.add_argument("--intersect_only", type=str2bool, nargs='?',
                         const=True, default=False,
                         help="Activate nice mode.")
+		parser.add_argument("--blastout",type=argparse.FileType('r'),
+			help="Tab delimited output file from BLAST")
 		parser.add_argument("--outdir","-o",default="duomolog_out")
 		args = parser.parse_args(sys.argv[2:])
 
@@ -120,6 +123,7 @@ def pairRedundant(input,query):
 	# print(shared_seqs)
 	# print(len(input_seqs),len(query_seqs),len(shared_seqs))
 	return shared_seqs_query_ids
+
 def checkDir(dirName):
 	if not os.path.exists(dirName):
 		os.makedirs(dirName)
@@ -138,6 +142,8 @@ def main():
 	query_file = duomolog_args.query.name
 	outdir = duomolog_args.outdir
 	intersect_only = duomolog_args.intersect_only
+	blastout = duomolog_args.blastout
+	
 	
 	checkDir(outdir)
 	querySeq = SeqIO.index(query_file, "fasta")
@@ -153,8 +159,15 @@ def main():
 			for h in sharedIDs:
 				print(h)
 			sys.exit()
+		print(bool(blastout))
+		if bool(blastout):
+			blast_results = blast.load_blast(blastout,list(inputSeq.keys()))
+		else:
+			blast_results = blast.run_blast(input_file,query_file)
+			
+			
 
-		blast_results = blast.run_blast(input_file,query_file)
+			
 		
 		# print(blast_results)
 		alignment = msa.run_mafft(input_file)
@@ -162,49 +175,55 @@ def main():
 		alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
 		hmmer_results = hmmer.run_hmmer(alignment_file, query_file)
 
-		blast_headers = set(blast_results["qseqid"].astype(str))
+		blast_headers = set(blast_results["qseqid"].astype(str)) # This needs to be done prior to this
 		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
-		blast_hmmer_subset = resultSubset.Duo("blast",blast_headers,"hmmer",hmmer_headers)
+		blast_hmmer_subset = duo.Duo("blast",blast_headers,"hmmer",hmmer_headers)
+		if not intersect_only:
+			blast_hmmer_subset.dropEmpty()
+			blast_hmmer_subset.dropRedundant()
+		
+		resultSubset.writeOut(outdir,blast_hmmer_subset,querySeq,intersect_only)
 		
 
 		# print(querySeq)
 		# print(querySeq["119355"])
 		
-		if intersect_only:
-			blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
-			# print(len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]))
-			if len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]) >0:
-				with open(outdir +"/duomolog_results.txt", "w") as summary_out:
-					with open(outdir +"/blast_intersect_hmmer.fa","w") as seq_out:
-						for input_header in inputSeq:
-							record = inputSeq[input_header]
-							seq_out.write(record.format("fasta"))
-						for header in blast_hmmer_subsetSeqs["blast_intersect_hmmer"]:
-							record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
-							seq_out.write(record.format("fasta"))
-							summary_out.write(header+"\tblast_intersect_hmmer\n")
-					outAlignment = msa.run_mafft(outdir +"/blast_intersect_hmmer.fa")
-					outAlignmentFile = outdir +"/blast_intersect_hmmer.mafft.aln"
-					outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
+		### RETOOL below, it is gross, and I hate it
+		# if intersect_only:
+		# 	blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+		# 	# print(len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]))
+		# 	if len(blast_hmmer_subsetSeqs["blast_intersect_hmmer"]) >0:
+		# 		with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+		# 			with open(outdir +"/blast_intersect_hmmer.fa","w") as seq_out:
+		# 				for input_header in inputSeq:
+		# 					record = inputSeq[input_header]
+		# 					seq_out.write(record.format("fasta"))
+		# 				for header in blast_hmmer_subsetSeqs["blast_intersect_hmmer"]:
+		# 					record = blast_hmmer_subsetSeqs["blast_intersect_hmmer"][header]
+		# 					seq_out.write(record.format("fasta"))
+		# 					summary_out.write(header+"\tblast_intersect_hmmer\n")
+		# 			outAlignment = msa.run_mafft(outdir +"/blast_intersect_hmmer.fa")
+		# 			outAlignmentFile = outdir +"/blast_intersect_hmmer.mafft.aln"
+		# 			outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 
 
-		else:
-			blast_hmmer_subset.dropEmpty()
-			blast_hmmer_subset.dropRedundant()
-			blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
-			with open(outdir +"/duomolog_results.txt", "w") as summary_out:
-				for subset in blast_hmmer_subsetSeqs:
-					with open(outdir +"/"+  subset + ".fa","w") as seq_out:
-						for input_header in inputSeq:
-							record = inputSeq[input_header]
-							seq_out.write(record.format("fasta"))
-						for header in blast_hmmer_subsetSeqs[subset]:
-							record = blast_hmmer_subsetSeqs[subset][header]
-							seq_out.write(record.format("fasta"))
-							summary_out.write(header+"\t" + subset + "\n")
-					outAlignment = msa.run_mafft(outdir +"/"+  subset + ".fa")
-					outAlignmentFile = outdir +"/"+  subset + ".mafft.aln"
-					outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
+		# else:
+		# 	blast_hmmer_subset.dropEmpty()
+		# 	blast_hmmer_subset.dropRedundant()
+		# 	blast_hmmer_subsetSeqs = resultSubset.seqSubSet(querySeq,blast_hmmer_subset.subsets)
+		# 	with open(outdir +"/duomolog_results.txt", "w") as summary_out:
+		# 		for subset in blast_hmmer_subsetSeqs:
+		# 			with open(outdir +"/"+  subset + ".fa","w") as seq_out:
+		# 				for input_header in inputSeq:
+		# 					record = inputSeq[input_header]
+		# 					seq_out.write(record.format("fasta"))
+		# 				for header in blast_hmmer_subsetSeqs[subset]:
+		# 					record = blast_hmmer_subsetSeqs[subset][header]
+		# 					seq_out.write(record.format("fasta"))
+		# 					summary_out.write(header+"\t" + subset + "\n")
+		# 			outAlignment = msa.run_mafft(outdir +"/"+  subset + ".fa")
+		# 			outAlignmentFile = outdir +"/"+  subset + ".mafft.aln"
+		# 			outAlignmentWrite = SeqIO.write(outAlignment, outAlignmentFile, alignment_format)
 			
 		
 
