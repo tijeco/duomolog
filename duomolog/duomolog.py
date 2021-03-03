@@ -147,7 +147,8 @@ def main():
 	outFile = duomolog_args.outFile
 	intersect_only = duomolog_args.intersect_only
 	blastout = duomolog_args.blastout
-	hmmFile = duomolog_args.hmm.name
+	if duomolog_args.hmm !=None:
+		hmmFile = duomolog_args.hmm.name
 	
 	# checkDir(outdir)
 	querySeq = SeqIO.index(query_file, "fasta")
