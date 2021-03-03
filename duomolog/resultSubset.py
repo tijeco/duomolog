@@ -31,7 +31,8 @@ def writeOut(outFile,duo_subset,querySeq,intersect_only):
 					seq_out.write(record.format("fasta"))
 					# summary_out.write(header+"\t" + subset + "\n")
 	else:
-		sys.exit("Error: nothing to write")
+		print("Error: nothing to write")
+		sys.exit()
 	
 
 	
