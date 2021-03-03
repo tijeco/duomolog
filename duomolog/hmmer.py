@@ -2,13 +2,13 @@ import pyhmmer
 import shlex, subprocess
 import os
 
-def run_hmmer(alnFile,queryFile):
-	devnull = open(os.devnull, 'w')
-	hmmFile = alnFile+".hmm"
-	call_list = ''.join(['hmmbuild ',hmmFile,' ', alnFile])   
-	commands = shlex.split(call_list)  
-	subprocess.Popen(commands, stdin=subprocess.PIPE,           
-        	stderr=subprocess.PIPE,stdout=devnull).communicate() 
+def run_hmmer(queryFile, hmmFile):
+	# devnull = open(os.devnull, 'w')
+	# hmmFile = alnFile+".hmm"
+	# call_list = ''.join(['hmmbuild ',hmmFile,' ', alnFile])   
+	# commands = shlex.split(call_list)  
+	# subprocess.Popen(commands, stdin=subprocess.PIPE,           
+    #     	stderr=subprocess.PIPE,stdout=devnull).communicate() 
 	
 	
 	with pyhmmer.plan7.HMMFile(hmmFile) as h:
