@@ -196,9 +196,7 @@ def main():
 		blast_headers = set(blast_results["qseqid"].astype(str)) # This needs to be done prior to this
 		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
 		blast_hmmer_subset = duo.Duo("blast",blast_headers,"hmmer",hmmer_headers)
-		if not intersect_only:
-			blast_hmmer_subset.dropEmpty()
-			blast_hmmer_subset.dropRedundant()
+		
 		# print("Writing to:",outFile)
 		resultSubset.writeOut(outFile,blast_hmmer_subset,querySeq,intersect_only)
 		
