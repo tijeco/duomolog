@@ -2,6 +2,8 @@ import sys
 import argparse, os
 from Bio import AlignIO
 from Bio import SeqIO
+import shlex, subprocess
+import os
 
 from duomolog import blast
 from duomolog import msa
@@ -65,10 +67,12 @@ class ParseCommands(object):
 			help="FASTA formatted file containing database of peptides to be searched")
 		parser.add_argument("--intersect_only", type=str2bool, nargs='?',
                         const=True, default=False,
-                        help="Activate nice mode.")
+                        help="Only write hits from both approaches")
 		parser.add_argument("--blastout",type=argparse.FileType('r'),
 			help="Tab delimited output file from BLAST")
-		parser.add_argument("--outdir","-o",default="duomolog_out")
+		parser.add_argument("--hmm",type=argparse.FileType('r'),
+			help="HMM output file from hmmbuild")
+		parser.add_argument("--outFile","-o",default="duomolog_out")
 		args = parser.parse_args(sys.argv[2:])
 
 		self.args = args
@@ -124,11 +128,11 @@ def pairRedundant(input,query):
 	# print(len(input_seqs),len(query_seqs),len(shared_seqs))
 	return shared_seqs_query_ids
 
-def checkDir(dirName):
-	if not os.path.exists(dirName):
-		os.makedirs(dirName)
-	elif len(os.listdir(dirName)) != 0:
-		print("WARNING: provided output directory is not empty")
+# def checkDir(dirName):
+# 	if not os.path.exists(dirName):
+# 		os.makedirs(dirName)
+# 	elif len(os.listdir(dirName)) != 0:
+# 		print("WARNING: provided output directory is not empty")
 
 
 def main():
@@ -140,16 +144,17 @@ def main():
 	
 
 	query_file = duomolog_args.query.name
-	outdir = duomolog_args.outdir
+	outFile = duomolog_args.outFile
 	intersect_only = duomolog_args.intersect_only
 	blastout = duomolog_args.blastout
+	hmmFile = duomolog_args.hmm.name
 	
-	
-	checkDir(outdir)
+	# checkDir(outdir)
 	querySeq = SeqIO.index(query_file, "fasta")
 	# print(querySeq.items())
 
 	if subcommand == "blast_v_hmmer":
+		
 		input_file = duomolog_args.input.name
 		# alignment = AlignIO.read(open(alignment_file), alignment_format)
 		inputSeq = SeqIO.index(input_file, "fasta")
@@ -170,10 +175,22 @@ def main():
 			
 		
 		# print(blast_results)
-		alignment = msa.run_mafft(input_file)
-		alignment_file = input_file + ".mafft.aln"
-		alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
-		hmmer_results = hmmer.run_hmmer(alignment_file, query_file)
+		if bool(hmmFile):
+			print(hmmFile)
+			hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
+		else:
+			devnull = open(os.devnull, 'w')
+			alignment = msa.run_mafft(input_file)
+			alignment_file = input_file + ".mafft.aln"
+			alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
+		
+			hmmFile = alignment_file+".hmm"
+			call_list = ''.join(['hmmbuild ',hmmFile,' ', alignment_file])   
+			commands = shlex.split(call_list)  
+			subprocess.Popen(commands, stdin=subprocess.PIPE,           
+    		    	stderr=subprocess.PIPE,stdout=devnull).communicate() 
+			hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
+		
 
 		blast_headers = set(blast_results["qseqid"].astype(str)) # This needs to be done prior to this
 		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
@@ -182,7 +199,7 @@ def main():
 			blast_hmmer_subset.dropEmpty()
 			blast_hmmer_subset.dropRedundant()
 		
-		resultSubset.writeOut(outdir,blast_hmmer_subset,querySeq,intersect_only)
+		resultSubset.writeOut(outFile,blast_hmmer_subset,querySeq,intersect_only)
 		
 
 		# print(querySeq)
