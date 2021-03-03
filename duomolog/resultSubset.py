@@ -24,6 +24,7 @@ def writeOut(outFile,duo_subset,querySeq,intersect_only):
 		blast_hmmer_subsetSeqs = seqSubSet(querySeq,duo_subset.subsets)
 		# with open(outdir +"_duomolog_results.txt", "w") as summary_out:
 		for subset in blast_hmmer_subsetSeqs:
+			print("Writing to:",outFile)
 			with open(outFile,"w") as seq_out:
 				for header in blast_hmmer_subsetSeqs[subset]:
 					record = blast_hmmer_subsetSeqs[subset][header]
