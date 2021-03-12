@@ -14,26 +14,26 @@ def seqSubSet(seq,subset):
 			
 
 
-def writeOut(outFile,duo_subset,querySeq,intersect_only):
+def writeOut(outFile,summary_out,duo_subset,querySeq,intersect_only):
 	if intersect_only:
 		duo_subset.intersectOnly()
 	else:
 		duo_subset.dropRedundant()
 	duo_subset.dropEmpty()
 	if bool(duo_subset):
-		with open(outFile,"w") as summary_out:
-			print(f"Writing to: {outFile}")
-			blast_hmmer_subsetSeqs = seqSubSet(querySeq,duo_subset.subsets)
-			# with open(outdir +"_duomolog_results.txt", "w") as summary_out:
+		# with open(outFile,"w") as summary_out:
+			# print(f"Writing to: {outFile}")
+		blast_hmmer_subsetSeqs = seqSubSet(querySeq,duo_subset.subsets)
+		# with open(outdir +"_duomolog_results.txt", "w") as summary_out:
 			
-			for subset in blast_hmmer_subsetSeqs:
+		for subset in blast_hmmer_subsetSeqs:
 
-				with open(f"{outFile}.duomolog.{subset}.fa", "w") as seq_out:
-					print(f"Writing to: {outFile}.duomolog.{subset}.fa")
-					for header in blast_hmmer_subsetSeqs[subset]:
-						record = blast_hmmer_subsetSeqs[subset][header]
-						seq_out.write(record.format("fasta"))
-						summary_out.write(header+"\t" + subset + "\n")
+			with open(f"{outFile}.duomolog.{subset}.fa", "w") as seq_out:
+				print(f"Writing to: {outFile}.duomolog.{subset}.fa")
+				for header in blast_hmmer_subsetSeqs[subset]:
+					record = blast_hmmer_subsetSeqs[subset][header]
+					seq_out.write(record.format("fasta"))
+					summary_out.write(header+"\t" + subset + "\n")
 	else:
 		print("Error: nothing to write")
 		sys.exit()

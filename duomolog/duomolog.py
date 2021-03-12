@@ -167,52 +167,52 @@ def main():
 	# print(querySeq.items())
 
 	if subcommand == "blast_v_hmmer":
-		
-		input_file = duomolog_args.input.name
-		# alignment = AlignIO.read(open(alignment_file), alignment_format)
-		inputSeq = SeqIO.index(input_file, "fasta")
-		print("checking if query sequences are in the input")
-		sharedIDs = pairRedundant(inputSeq,querySeq)
-		# print("The following were found from the query in the input",sharedIDs)
-		if sharedIDs:
-			print("Error: the following sequences were found in the query that are already in the input alignment, please remove and try again")
-			for h in sharedIDs:
-				print(h)
-			sys.exit()
-		print(bool(blastout))
-		if bool(blastout):
-			blast_results = blast.load_blast(blastout,list(inputSeq.keys()))
-		else:
-			blast_results = blast.run_blast(input_file,query_file)
+		with open(outFile,"w") as summary_out:
+			input_file = duomolog_args.input.name
+			# alignment = AlignIO.read(open(alignment_file), alignment_format)
+			inputSeq = SeqIO.index(input_file, "fasta")
+			print("checking if query sequences are in the input")
+			sharedIDs = pairRedundant(inputSeq,querySeq)
+			# print("The following were found from the query in the input",sharedIDs)
+			if sharedIDs:
+				print("Error: the following sequences were found in the query that are already in the input alignment, please remove and try again")
+				for h in sharedIDs:
+					print(h)
+				sys.exit()
+			print(bool(blastout))
+			if bool(blastout):
+				blast_results = blast.load_blast(blastout,list(inputSeq.keys()))
+			else:
+				blast_results = blast.run_blast(input_file,query_file)
+				
+				
+
+				
 			
+			# print(blast_results)
+			if duomolog_args.hmm !=None:
+				print(hmmFile)
+				hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
+			else:
+				devnull = open(os.devnull, 'w')
+				alignment = msa.run_mafft(input_file)
+				alignment_file = input_file + ".mafft.aln"
+				alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
+			
+				hmmFile = alignment_file+".hmm"
+				call_list = ''.join(['hmmbuild ',hmmFile,' ', alignment_file])   
+				commands = shlex.split(call_list)  
+				subprocess.Popen(commands, stdin=subprocess.PIPE,           
+						stderr=subprocess.PIPE,stdout=devnull).communicate() 
+				hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
 			
 
+			blast_headers = set(blast_results["qseqid"].astype(str)) # This needs to be done prior to this
+			hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
+			blast_hmmer_subset = duo.Duo("blast",blast_headers,"hmmer",hmmer_headers)
 			
-		
-		# print(blast_results)
-		if duomolog_args.hmm !=None:
-			print(hmmFile)
-			hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
-		else:
-			devnull = open(os.devnull, 'w')
-			alignment = msa.run_mafft(input_file)
-			alignment_file = input_file + ".mafft.aln"
-			alignmentOut = SeqIO.write(alignment, alignment_file, alignment_format)
-		
-			hmmFile = alignment_file+".hmm"
-			call_list = ''.join(['hmmbuild ',hmmFile,' ', alignment_file])   
-			commands = shlex.split(call_list)  
-			subprocess.Popen(commands, stdin=subprocess.PIPE,           
-    		    	stderr=subprocess.PIPE,stdout=devnull).communicate() 
-			hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
-		
-
-		blast_headers = set(blast_results["qseqid"].astype(str)) # This needs to be done prior to this
-		hmmer_headers = set([hit.name.decode() for hit in hmmer_results])
-		blast_hmmer_subset = duo.Duo("blast",blast_headers,"hmmer",hmmer_headers)
-		
-		# print("Writing to:",outFile)
-		resultSubset.writeOut(outFile,blast_hmmer_subset,querySeq,intersect_only)
+			# print("Writing to:",outFile)
+			resultSubset.writeOut(outFile,summary_out,blast_hmmer_subset,querySeq,intersect_only)
 		
 
 		# print(querySeq)
