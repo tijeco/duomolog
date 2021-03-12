@@ -62,7 +62,8 @@ class ParseCommands(object):
 		parser = argparse.ArgumentParser(
 			description="Runs blast and hmmer")
 		
-		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True)
+		parser.add_argument("--input","-i", type=argparse.FileType('r'),required=True,
+			help="Verified homologous input protein sequence fasta file")
 		parser.add_argument("--query","-q",type=argparse.FileType('r'), 
 			help="FASTA formatted file containing database of peptides to be searched")
 		parser.add_argument("--intersect_only", type=str2bool, nargs='?',
@@ -72,7 +73,8 @@ class ParseCommands(object):
 			help="Tab delimited output file from BLAST")
 		parser.add_argument("--hmm",type=argparse.FileType('r'),
 			help="HMM output file from hmmbuild")
-		parser.add_argument("--outFile","-o",default="duomolog_out")
+		parser.add_argument("--outFile","-o",default="duomolog_out.txt",
+			help="Name of file to write output to")
 		args = parser.parse_args(sys.argv[2:])
 
 		self.args = args
@@ -102,17 +104,27 @@ def str2bool(v):
 
 def notRedundant(sequences):
 	seqs = {}
+	redundantFound = False
 	for id, record in sequences.items():
 		seq = record.seq
 		if seq not in seqs:
 			seqs[seq] = id
 		else:
-			seqs = {}
-			break
+			redundantFound = True
+			print("ERROR:",id,"has a redundant sequence")
+	if redundantFound:
+		sys.exit("Please remove redundant sequences and try again")	
+
+
+
+	print("len sequences:",len(sequences),"len seqs:",len(seqs))
+		
 	return seqs
 
 def pairRedundant(input,query):
+	print("checking if input has redundant sequences")
 	nr_input = notRedundant(input)
+	print("checking if query has redundant sequences")
 	nr_query = notRedundant(query)
 	
 	if nr_input == False:
@@ -159,7 +171,9 @@ def main():
 		input_file = duomolog_args.input.name
 		# alignment = AlignIO.read(open(alignment_file), alignment_format)
 		inputSeq = SeqIO.index(input_file, "fasta")
+		print("checking if query sequences are in the input")
 		sharedIDs = pairRedundant(inputSeq,querySeq)
+		# print("The following were found from the query in the input",sharedIDs)
 		if sharedIDs:
 			print("Error: the following sequences were found in the query that are already in the input alignment, please remove and try again")
 			for h in sharedIDs:
@@ -176,7 +190,7 @@ def main():
 			
 		
 		# print(blast_results)
-		if bool(hmmFile):
+		if duomolog_args.hmm !=None:
 			print(hmmFile)
 			hmmer_results = hmmer.run_hmmer(query_file, hmmFile)
 		else:
