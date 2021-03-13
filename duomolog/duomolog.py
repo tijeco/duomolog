@@ -179,7 +179,7 @@ def main():
 				print("writing to ",outFile+".sharedSeqs.txt")
 				with open(outFile+".sharedSeqs.txt", "w") as sharedOut:
 					for h in sharedIDs:
-						sharedOut.write(h)
+						sharedOut.write(h + "\n")
 				sys.exit()
 			print(bool(blastout))
 			if bool(blastout):
