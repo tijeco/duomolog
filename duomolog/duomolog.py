@@ -176,8 +176,10 @@ def main():
 			# print("The following were found from the query in the input",sharedIDs)
 			if sharedIDs:
 				print("Error: the following sequences were found in the query that are already in the input alignment, please remove and try again")
-				for h in sharedIDs:
-					print(h)
+				print("writing to ",outFile+".sharedSeqs.txt")
+				with open(outFile+".sharedSeqs.txt", "w") as sharedOut:
+					for h in sharedIDs:
+						sharedOut.write(h)
 				sys.exit()
 			print(bool(blastout))
 			if bool(blastout):
