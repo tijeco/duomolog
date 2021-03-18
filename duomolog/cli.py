@@ -52,7 +52,7 @@ class CLI(object):
         query_novel_file = outDir + "query_novel.fasta"
         query_shared_with_input_File = outDir + "query_shared_with_input.fasta"
 
-        if query_shared_with_inputDB != None:
+        if not query_shared_with_inputDB.empty:
             pepDB2Fa(query_shared_with_inputDB,query_shared_with_input_File)
         pepDB2Fa(query_novelDB,query_novel_file)
 
@@ -176,14 +176,15 @@ def intersectInQuery(inDB,queryDB):
     # print(inSeqs)
     # print(querySeqs)
     sharedSeqs = inSeqs & querySeqs
-
-    if sharedSeqs == set():
-        # titanic[titanic["Age"] > 35]
-        outDB = queryDB
-        sharedDB = None
-    else:
-        # print(sharedSeqs)
-        sharedDB = queryDB[queryDB["seq"].isin(sharedSeqs)]
-        outDB = queryDB[~queryDB["seq"].isin(sharedSeqs)]
+    sharedDB = queryDB[queryDB["seq"].isin(sharedSeqs)]
+    outDB = queryDB[~queryDB["seq"].isin(sharedSeqs)]
+    # if sharedSeqs == set():
+    #     # titanic[titanic["Age"] > 35]
+    #     outDB = queryDB
+    #     sharedDB = None
+    # else:
+    #     # print(sharedSeqs)
+    #     sharedDB = queryDB[queryDB["seq"].isin(sharedSeqs)]
+    #     outDB = queryDB[~queryDB["seq"].isin(sharedSeqs)]
 
     return outDB, sharedDB
