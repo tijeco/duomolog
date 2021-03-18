@@ -4,17 +4,19 @@ channels:
   - anaconda
   - conda-forge
   - bioconda
+  - fastai
 
 dependencies:
+  - jupyter=1.0.0
+  - ipykernel=5.3.4
   - pandas=1.2.2
   - hmmer=3.3.1
   - blast=2.9.0
   - mafft=7.475
   - biopython=1.78
   - setuptools=52.0.0
-  - pip=21.0.1
-  - pip:
-    - pyhmmer==0.2.1
+  - pyhmmer=0.3.0
+  - nbdev=1.1.13
 
 
   
