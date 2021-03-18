@@ -17,6 +17,7 @@ dependencies:
   - setuptools=52.0.0
   - pyhmmer=0.3.0
   - nbdev=1.1.13
+  - fire=0.4.0
 
 
   
