@@ -2,28 +2,57 @@
 A method to identify the best set of homologous sequences from two homology searching approaches.
 
 
+
+
 # Usage
 ```
-usage: duomolog <command> [<args>] <queryPepFasta>
-                        The most commonly used duomolog commands are:
-                                blast_v_hmmer
-                                hmm_v_hmm
+NAME
+    duomolog
 
-usage: duomolog blast_v_hmmer [<args>] 
-Runs blast and hmmer
+SYNOPSIS
+    duomolog COMMAND | VALUE
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --input INPUT, -i INPUT
-                        Verified homologous input protein sequence fasta file
-  --query QUERY, -q QUERY
-                        FASTA formatted file containing database of peptides to be searched
-  --intersect_only [INTERSECT_ONLY]
-                        Only write hits from both approaches
-  --blastout BLASTOUT   Tab delimited output file from BLAST
-  --hmm HMM             HMM output file from hmmbuild
-  --outFile OUTFILE, -o OUTFILE
-                        Name of file to write output to
+COMMANDS
+    COMMAND is one of the following:
+
+     blast_v_hmmer
+
+VALUES
+    VALUE is one of the following:
+
+     blastOut
+
+     hmmerOut
+
+INFO: Showing help with the command 'duomolog blast_v_hmmer -- --help'.
+
+NAME
+    duomolog blast_v_hmmer
+
+SYNOPSIS
+    duomolog blast_v_hmmer INFILE QUERYFILE <flags>
+
+POSITIONAL ARGUMENTS
+    INFILE
+    QUERYFILE
+
+FLAGS
+    --summaryOut=SUMMARYOUT
+        Default: 'duomolog_out/summary...
+    --blastFile=BLASTFILE
+        Type: Optional[]
+        Default: None
+    --alnFile=ALNFILE
+        Type: Optional[]
+        Default: None
+    --hmmFile=HMMFILE
+        Type: Optional[]
+        Default: None
+    --intersectOnly=INTERSECTONLY
+        Default: False
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
 ```
 # Sub-commands
 `blast_v_hmmer`
