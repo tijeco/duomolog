@@ -4,6 +4,7 @@ __all__ = ['run_blast', 'load_blast']
 
 # Cell
 from io import StringIO
+from Bio import SeqIO
 from Bio.Blast.Applications import NcbimakeblastdbCommandline
 from Bio.Blast.Applications import NcbiblastpCommandline
 import pandas as pd
